@@ -1,0 +1,23 @@
+{
+  "name": "d3.force-link-change",
+  "version": "0.0.0",
+  "description": "Manipulate the links array in d3.force.layout objects",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "keywords": [
+    "d3",
+    "d3js",
+    "force",
+    "d3.layout.force",
+    "layout",
+    "graph",
+    "edges"
+  ],
+  "author": "Andrew Winterman",
+  "license": "MIT",
+  "dependencies": {
+    "d3.force-link-status": "0.0.1"
+  }
+}
