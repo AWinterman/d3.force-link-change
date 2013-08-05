@@ -1,3 +1,4 @@
+// # Change #
 module.exports = Change
 
 var Status = require('d3.force-link-status')
@@ -15,9 +16,10 @@ var Status = require('d3.force-link-status')
 // node.
 
 function Change(loops, directed, multiedge) {
-  Status.call(this, directed)
   this.loops = loops
   this.multiedge = multiedge
+
+  this.status = new Status(directed)
 }
 
 var cons = Change
@@ -25,9 +27,20 @@ var cons = Change
 
 proto.constructor = cons
 
-// `Change#add_link`: Add a link to the graph. If the graph does not allow multiple edges, check first to
-// make sure we don't already have it. `Change#add_link also updates the
-// neighborhoods of the source and the target.
+
+// ##`Change#add_link`##
+// Add a link to the graph. If the graph does not allow multiple edges, check first to
+// make sure we don't already have it. `Change#add_link` also updates the
+// neighborhoods of the source and the target to include the new link.
+
+// **Paremeters**:
+
+// - `link`: A link object.
+// - `force`: A d3.layout.force()-like object.
+
+// **Returns**: 
+// `true` if the link was successfully added to the array, `false` otherwise.
+
 proto.add_link = function(link, force) {
   var name = this.name(link)
     , idx
@@ -44,49 +57,46 @@ proto.add_link = function(link, force) {
   link.source.neighborhood.push(link)
   link.target.neighborhood.push(link)
 
-  this.links.push(link)
+  this.force.links().push(link)
   return true
 }
 
-// removes the link, once. If the graph is not directed, will not know the
-// difference between a link and its reverse. Can also take an array or a
-// single link.
+// ## `Change#remove_link` 
+
+// Remove the link, once. If the graph is not directed, it will treat a link
+// and its reverse as though they were identical. 
+
+// This method will also update the neighborhood attributes of the source and
+// target, removing its first argument from both.
+
+// *Parameters:*
+
+// - `link`: A link object
+// - `force`:  a d3.layout.force()-like object
+
+// **Returns:**  If the link to be removed remove is in the d3.layout.force().link() array, returns
+// `true`. Returns `false` otherwise.
+
 proto.remove_link = function(link, force) {
-  var reverse 
-    , remove = remove_link(force)
+  var index = this.indexOf(link)
+    , link_array = this.force.links()
 
-  if(!link.length) {
-    link = [link]
+  if(index === -1) {
+    return false
   }
 
-  return link.map(remove_link, this)
+  target_index = source.neighborhood.indexOf(link)
+  source_index = source.neighborhood.indexOf(link)
+
+  link_array[index].source.neighborhood.splice(target_index, 1)
+  link_array[index].target.neighborhood.splice(source_index, 1)
+
+  link_array.splice(index, 1)
+  return true
 }
 
-function remove_link(force) {
-  return function(link, idx, link_array) {
-    var index = this.indexOf(link)
-      , link_array = this.force.links()
-
-    // find the element in the links array and remove it
-    if(index === -1) {
-      return false
-    }
-
-    target_index = source.neighborhood.indexOf(link)
-    source_index = source.neighborhood.indexOf(link)
-
-    // remove the source from the targets neighborhood, and the target from the
-    // source neighborhood
-    link_array[index].source.neighborhood.splice(target_index, 1)
-    link_array[index].target.neighborhood.splice(source_index, 1)
-
-    // need to test to mak sure this updates the force array
-    link_array.splice(index, 1)
-    return true
-  }
-}
-
-// returns a new object which is the reverse of `link`.
+// ## `Change#reverse` ##
+// Returns a new object which is the reverse of the argument.
 proto.reverse = function(link) {
   var copy = this.copy(link)
 
@@ -96,8 +106,8 @@ proto.reverse = function(link) {
   return copy
 }
 
-// produce a copy of its argument.
+// ## `Change#copy` ##
+// Produce a copy of the argument.
 proto.copy = function(obj) {
   return JSON.parse(JSON.stringify(obj))
 }
-
