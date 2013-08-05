@@ -15,6 +15,10 @@
     "graph",
     "edges"
   ],
+  "repository" : {
+      "type" : "git",
+      "url" : "https://github.com/AWinterman/d3.force-link-change"
+  },
   "author": "Andrew Winterman",
   "license": "MIT",
   "dependencies": {
