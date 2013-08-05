@@ -19,7 +19,7 @@ function Change(loops, directed, multiedge) {
   this.loops = loops
   this.multiedge = multiedge
 
-  this.status = new Status(directed)
+  Status.call(this, directed)
 }
 
 var cons = Change
