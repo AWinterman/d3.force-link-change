@@ -1,9 +1,23 @@
 module.exports = Change
 
-var Status = require('./link-status')
+var Status = require('d3.force-link-status')
+
+// Change is an object to manipulate the links in a force directed graph.
+// Paremeters:
+
+// - `loops`: true if a link can connect a node to itself?
+// - `directed`: true if a link from A -> B === B -> A?
+// - `multiedge`: true if the link A -> B can appear multiple times in a graph.
+
+// Change will maintain a new attribute on each of the nodes, called
+// `neighborhood`, which is an array of references to each link from or two a
+// node. This is to facilitate easy manipulation of the links relative to a
+// node.
 
 function Change(loops, directed, multiedge) {
-  Status.call(this, loops, directed, multiedge)
+  Status.call(this, directed)
+  this.loops = loops
+  this.multiedge = multiedge
 }
 
 var cons = Change
@@ -11,18 +25,24 @@ var cons = Change
 
 proto.constructor = cons
 
-// Add a new link. If the graph does not allow multiple edges, check first to
-// make sure we don't already have it.
+// `Change#add_link`: Add a link to the graph. If the graph does not allow multiple edges, check first to
+// make sure we don't already have it. `Change#add_link also updates the
+// neighborhoods of the source and the target.
 proto.add_link = function(link, force) {
   var name = this.name(link)
     , idx
 
-  if(!this._simple && this.has(link, force)) {
+  if(!this.multiedge && this.has(link, force)) {
     return false
   }
+  if(!this.loops) {
+    if (link.source == link.target) {
+      return false
+    }
+  }
 
-  link.source._out_links.push(link)
-  link.target._in_links.push(link)
+  link.source.neighborhood.push(link)
+  link.target.neighborhood.push(link)
 
   this.links.push(link)
   return true
@@ -33,39 +53,51 @@ proto.add_link = function(link, force) {
 // single link.
 proto.remove_link = function(link, force) {
   var reverse 
+    , remove = remove_link(force)
 
   if(!link.length) {
     link = [link]
   }
 
-  if (this._directed) {
-    return remove_link.apply(this, force, link)
-  }
-
-  reverse = link.map(function(d) {
-    return {target: d.source, source: d.target}
-  })
-
-  return remove_link.apply(this, link, force) || remove_link.apply(this, reverse, force)
+  return link.map(remove_link, this)
 }
 
-function remove_link(link, force) {
-  var index = this.indexOf(link)
-  // find the element in the links array and remove it
-  if(index === -1) {
-    return false
+function remove_link(force) {
+  return function(link, idx, link_array) {
+    var index = this.indexOf(link)
+      , link_array = this.force.links()
+
+    // find the element in the links array and remove it
+    if(index === -1) {
+      return false
+    }
+
+    target_index = source.neighborhood.indexOf(link)
+    source_index = source.neighborhood.indexOf(link)
+
+    // remove the source from the targets neighborhood, and the target from the
+    // source neighborhood
+    link_array[index].source.neighborhood.splice(target_index, 1)
+    link_array[index].target.neighborhood.splice(source_index, 1)
+
+    // need to test to mak sure this updates the force array
+    link_array.splice(index, 1)
+    return true
   }
+}
 
-  // 
-  target_index = source._out_links.indexOf(link)
-  source_index = source._in_links.indexOf(link)
+// returns a new object which is the reverse of `link`.
+proto.reverse = function(link) {
+  var copy = this.copy(link)
 
-  // remove the source from the targets neighborhood, and the target from the
-  // source neighborhood
-  this.links[index].source._out_links.splice(target_index, 1)
-  this.links[index].target._in_links.splice(source_index, 1)
+  copy.source = link.target
+  copy.target = link.source
 
-  this.links.splice(index, 1)
-  return true
+  return copy
+}
+
+// produce a copy of its argument.
+proto.copy = function(obj) {
+  return JSON.parse(JSON.stringify(obj))
 }
 
