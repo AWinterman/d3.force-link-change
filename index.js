@@ -19,11 +19,11 @@ function Change(loops, directed, multiedge) {
   this.loops = loops
   this.multiedge = multiedge
 
-  this.status = new Status(directed)
+  Status.call(this, directed)
 }
 
 var cons = Change
-  , proto = cons.prototype 
+  , proto = cons.prototype = Object.create(Status.prototype)
 
 proto.constructor = cons
 
@@ -42,10 +42,10 @@ proto.constructor = cons
 // `true` if the link was successfully added to the array, `false` otherwise.
 
 proto.add_link = function(link, force) {
-  var name = this.status.name(link)
+  var name = this.name(link)
     , idx
 
-  if(!this.multiedge && this.status.has(link, force)) {
+  if(!this.multiedge && this.has(link, force)) {
     return false
   }
   if(!this.loops) {
@@ -78,7 +78,7 @@ proto.add_link = function(link, force) {
 // `true`. Returns `false` otherwise.
 
 proto.remove_link = function(link, force) {
-  var index = this.status.indexOf(link)
+  var index = this.indexOf(link)
     , link_array = this.force.links()
 
   if(index === -1) {
