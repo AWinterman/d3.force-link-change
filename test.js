@@ -1,8 +1,5 @@
 var Change = require('./index')
-  , test = require('test')
-
-
-
+  , test = require('tape')
 
 function Tester(loops, directed, multiedge) {
   this.loops = loops
